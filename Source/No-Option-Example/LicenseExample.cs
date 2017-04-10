@@ -93,13 +93,7 @@ namespace No_Option_Example
 
             SaveActivation(activationFromServer);
 
-            //var newActivation = key2.FlatMap(_connection.GetActivationStringFromLicenseServer) // TODO
-            //    .FlatMap(_parser.TryParseActivation)
-            //    .Filter(HasValidActivationTime, LicenseError.InvalidActivationTime);
-
-            //newActivation.MatchSome(SaveActivation);
-
-            return null;
+            return activationFromServer;
         }
 
         public void SaveActivation(Activation activation)
