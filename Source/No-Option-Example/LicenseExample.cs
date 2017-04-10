@@ -73,7 +73,25 @@ namespace No_Option_Example
                 return null;
             }
 
+            var licenseStringFromServer = _connection.Response;
 
+            var couldParse = _parser.TryParse(licenseStringFromServer);
+
+            if (!couldParse)
+            {
+                Error = LicenseError.ParseFailed;
+                return null;
+            }
+
+            var activationFromServer = _parser.ParsedActivation;
+
+            if (!HasValidActivationTime(activationFromServer))
+            {
+                Error = LicenseError.InvalidActivationTime;
+                return null;
+            }
+
+            SaveActivation(activationFromServer);
 
             //var newActivation = key2.FlatMap(_connection.GetActivationStringFromLicenseServer) // TODO
             //    .FlatMap(_parser.TryParseActivation)
@@ -84,7 +102,21 @@ namespace No_Option_Example
             return null;
         }
 
+        public void SaveActivation(Activation activation)
+        {
+            // sideeffects only: save activation in registry
+        }
 
+        private bool HasValidActivationTime(Activation activation)
+        {
+            return IsTimeOfActivationValid(activation) || activation.Ok;
+        }
+
+        private bool IsTimeOfActivationValid(Activation activation)
+        {
+            var difference = activation.TimeOfActivation - DateTime.Now;
+            return difference <= TimeSpan.FromMinutes(5) && difference >= -TimeSpan.FromHours(5);
+        }
 
 
         private string Decode(string encodedString)
@@ -120,11 +152,11 @@ namespace No_Option_Example
 
         public class ServerConnection
         {
-            public string response { get; set; }
+            public string Response { get; set; }
 
             public bool TryGetServerResponse(string key)
             {
-                response = "MyResponse";
+                Response = "MyResponse";
                 return true;
             }
         }
