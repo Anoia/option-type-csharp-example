@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EEE17ED3-E5BB-4173-B811-E2F2B5542EBB}</ProjectGuid>
+    <ProjectGuid>{B0871272-9B31-4721-951E-AA6FABF8BB65}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Option_Example</RootNamespace>
-    <AssemblyName>Option-Example</AssemblyName>
+    <RootNamespace>No_Option_Example</RootNamespace>
+    <AssemblyName>No-Option-Example</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,9 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Optional, Version=3.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Optional.3.2.0\lib\net452\Optional.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,14 +40,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Activation.cs" />
-    <Compile Include="Base64.cs" />
-    <Compile Include="LicenseError.cs" />
     <Compile Include="LicenseExample.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\Option-Example\Option-Example.csproj">
+      <Project>{eee17ed3-e5bb-4173-b811-e2f2b5542ebb}</Project>
+      <Name>Option-Example</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

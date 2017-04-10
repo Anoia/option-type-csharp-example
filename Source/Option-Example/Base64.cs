@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Option_Example
 {
-    internal static class Base64
+    public static class Base64
     {
         public static string Encode(string plainText)
         {
