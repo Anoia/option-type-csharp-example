@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Win32;
 using Option_Example;
 
@@ -11,7 +7,7 @@ namespace No_Option_Example
     public class LicenseExample
     {
         private readonly Parser _parser;
-        private ServerConnection _connection;
+        private readonly ServerConnection _connection;
 
         public LicenseExample()
         {
@@ -20,34 +16,7 @@ namespace No_Option_Example
         }
         public LicenseError Error { get; set; } = LicenseError.UnknownError;
 
-        private Activation GetSavedActivation()
-        {
-            var encodedString = ReadFromRegistry("MyEncodedActivationString");
-
-            if (string.IsNullOrWhiteSpace(encodedString))
-            {
-                Error = LicenseError.NoActivation;
-                return null;
-            }
-
-            var decoded = Decode(encodedString);
-            if (decoded == null)
-            {
-                Error = LicenseError.DecodeFailed;
-                return null;
-            }
-
-            var couldParse = _parser.TryParse(decoded);
-
-            if (!couldParse)
-            {
-                Error = LicenseError.ParseFailed;
-                return null;
-            }
-
-            return _parser.ParsedActivation;
-        }
-
+        // ================================FUNCTION IMPLEMENTATION START================================ \\
         public Activation GetActivation()
         {
             var savedActivation = GetSavedActivation();
@@ -57,7 +26,7 @@ namespace No_Option_Example
                 return savedActivation;
             }
 
-            var key = savedActivation?.Key ?? ReadFromRegistry("key");
+            var key = savedActivation?.Key ?? ReadKey();
 
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -96,6 +65,42 @@ namespace No_Option_Example
             return activationFromServer;
         }
 
+        private Activation GetSavedActivation()
+        {
+            Activation result = null;
+
+            var encodedString = ReadActivationString();
+
+            if (!string.IsNullOrWhiteSpace(encodedString))
+            {
+                var decoded = Decode(encodedString);
+                if (decoded != null)
+                {
+                    var couldParse = _parser.TryParse(decoded);
+
+                    if (couldParse)
+                    {
+                        result = _parser.ParsedActivation;
+                    }
+                    else
+                    {
+                        Error = LicenseError.ParseFailed;
+                    }
+                }
+                else
+                {
+                    Error = LicenseError.DecodeFailed;
+                }
+            }
+            else
+            {
+                Error = LicenseError.NoActivation;
+            }
+
+            return result;
+        }
+        // ================================FUNCTION IMPLEMENTATION END================================ \\
+
         public void SaveActivation(Activation activation)
         {
             // sideeffects only: save activation in registry
@@ -123,6 +128,16 @@ namespace No_Option_Example
             {
                 return null;
             }
+        }
+
+        private string ReadKey()
+        {
+            return ReadFromRegistry("TheLicenseKey");
+        }
+
+        private string ReadActivationString()
+        {
+            return ReadFromRegistry("MyEncodedActivationString");
         }
 
         private string ReadFromRegistry(string value)

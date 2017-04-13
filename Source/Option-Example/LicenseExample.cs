@@ -7,6 +7,8 @@ namespace Option_Example
 {
     public class LicenseExample
     {
+
+        // ================================FUNCTION IMPLEMENTATION START================================ \\
         public Option<Activation, LicenseError> GetActivation()
         {
             var savedActivation = ReadActivationString()
@@ -28,6 +30,7 @@ namespace Option_Example
 
             return onlineActivation.HasValue ? onlineActivation : savedActivation;
         }
+        // ================================FUNCTION IMPLEMENTATION END================================ \\
 
         private bool HasValidActivationTime(Activation activation)
         {
