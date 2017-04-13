@@ -11,7 +11,7 @@ I’ll give you an overview of this awesome concept and how to use it even thoug
 So, what is this option type?
 
 An **option type** is a generic type that can encapsulate an optional value. In other words, it's a container that may or may not contain a value.
-A lot of functional programming languages have option types build in, like F#, Scala, OCaml. In some other languages like Haskell it's called **maybe**, but the concept is the same.
+A lot of functional programming languages have option types build in, like F#, Scala or OCaml. In some other languages like Haskell it's called **maybe**, but the concept is the same.
 
 It's very useful for example as a return value for a function, that could return a missing or invalid value.
 
@@ -36,7 +36,7 @@ In F#, Option replaces null almost completely!
 
 ### Why would I do that?
 
-Using an option type has a few advantages over null. But before continuing with that, let's look at what C# offers us out of the box.
+Using an option type has a few advantages over null. But before continuing with that let's look at what C# offers us out of the box.
 
 ## What about null and Nullable?
 
@@ -62,7 +62,7 @@ The same wouldn't be possible with an option type: `Option<string>` is of type `
 As stated above, null in C# represents a reference that doesn’t point to anything. This is completely different from the concept of “missing” data, which is a valid part of modelling any system in any language. Null is often used to represent missing data though.
 
 ### Option vs Nullable
-The basic idea of an option type and Nullable is the same, only Nullable is much weaker. It only works on value types (like `int` or `DateTime`), but not on reference types such as strings or classes. Nullable also doesn't provide much special behavior.
+The basic idea of an option type and Nullable (see [MSDN](https://msdn.microsoft.com/en-us/library/1t3y8s4s.aspx)) is the same, only Nullable is much weaker. It only works on value types (like `int` or `DateTime`), but not on reference types such as strings or classes. Nullable also doesn't provide much special behavior.
 
 ### Null checking in C# #
 C# provides a lot of convenience operators when it comes to null values:
@@ -101,12 +101,12 @@ First and foremost it provides an implementation for **Option/Maybe** and **Eith
 
 The option/maybe type behaves similar to the functional programming concept we've talked about: `Option<T>` can be `Some<T>` when a value `T` exists or `None` if it doesn't.
 
-The either type is similar, but instead of `None` it provides another *exceptional* value indicating why an operation regarding the optional value failed.
+The either type is similar, but instead of `None` it provides another *exceptional* value indicating why there is no value or why an operation regarding the optional value failed.
 
 In addition to that, the implementation prevents 'unsafe' access to the internal value of an `Option<T>`. It forces the user to check if a value is actually present, thereby mitigating many of the problems of null values.
-You can still retrieve the value directly if you want to (whether it's there or not), but you need to explicitly state that you want to access it in an unsafe way, it can't happen on accident.
+You can still retrieve the value directly if you want to (whether it's there or not), but you need to explicitly state that you want to access it in an unsafe way, it can't sneak in by accident.
 
-The library provides a lot of utility methods to make working with the option type more convenient. The most noteworthy feature that makes this implementation of the option type so great is the possibility to treat the option type like a collection with zero or one values. It's possible to apply map and filter functions to the value without ever unpacking it from it's `Option` container!
+The library provides a lot of utility methods to make working with the option type more convenient. The most noteworthy feature that makes this implementation of the option type so great is the possibility to treat the option type like a collection with zero or one values. It's possible to apply map and filter functions to the value **without ever unpacking it from it's `Option` container**! I didn't realize how great this is until I actually implemented it in a bigger project. 
 
 ## Example
 ...
