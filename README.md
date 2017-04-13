@@ -109,7 +109,15 @@ You can still retrieve the value directly if you want to (whether it's there or 
 The library provides a lot of utility methods to make working with the option type more convenient. The most noteworthy feature that makes this implementation of the option type so great is the possibility to treat the option type like a collection with zero or one values. It's possible to apply map and filter functions to the value **without ever unpacking it from it's `Option` container**! I didn't realize how great this is until I actually implemented it in a bigger project. 
 
 ## Example
-...
+
+To demonstrate the benefits of using Optional I create a small example project. It is inspired by a real-world project where Optional helped me write simpler and more robust code.
+
+The function I implemented represents part of the licensing logic of an application. It is called `GetActivation()` and it tries to retrieve a valid activation to check if the application can start. First, it checks if a valid activation is already stored on the computer. If it finds one, it just returns it. If there is no stored activation or if the stored activation is not valid for some reason (maybe it expired or is corrupted) it tries to find a license key and activate it by contacting the license server.
+A more detailed representation of the process is displayed in the diagram below.
+
+![Diagram of license logic](option-example.png)
+
+
 
 ## Conclusion
 // TODO
