@@ -36,7 +36,9 @@ In F#, Option replaces null almost completely!
 
 ### Why would I do that?
 
-Using an option type has a few advantages over null. But before continuing with that let's look at what C# offers us out of the box.
+Using an option type has a few advantages over null. It allows you to reduce the amount of possible NullReferenceExceptions and at the same time cut down on manual null checks, which focuses your code and allows for a more concise definition of the business logic. In addition to that using an option type instead of null signals your intent and lets you model your data more explicitly.
+
+But before continuing with that, let's look at what C# offers us out of the box.
 
 ## What about null and Nullable?
 
@@ -65,7 +67,7 @@ As stated above, null in C# represents a reference that doesn’t point to anyth
 The basic idea of an option type and Nullable (see [MSDN](https://msdn.microsoft.com/en-us/library/1t3y8s4s.aspx)) is the same, only Nullable is much weaker. It only works on value types (like `int` or `DateTime`), but not on reference types such as strings or classes. Nullable also doesn't provide much special behavior.
 
 ### Null checking in C# #
-C# provides a lot of convenience operators when it comes to null values:
+C# provides some convenience operators when it comes to null values:
 ```csharp
 string s1 = null;
 var length = s1 != null ? s1.length : 0;
@@ -76,26 +78,26 @@ The `??` operator is called null-coalescing operator. It returns the left-hand o
 
 The `?.` operator is called null-propagation operator and allows for null checks within invocation chains. It will short-circuit and return null if anything in the chain is null.
 
-These two operators are great and make null checks much easier! However, you are screwed if you forget to use this operator, and nothing forces you to do so. Hello, unexpected NullReferenceException!
+These two operators are great and make null checks much easier! However, you are in trouble if you forget to use this operator, and nothing forces you to do so. Hello, unexpected NullReferenceException!
 
 ## Option to the rescue!
 
-As I've indicated in the beginning, an option type is a much better way to represent optional or invalid data than null or Nullable are.
+As I've indicated in the beginning an option type is a much better way to represent optional or invalid data than `null` or `Nullable` are.
 
 Using option instead of null to model missing or invalid data cuts down on manual null checks, which simplifies the control flow of your program, but that's not all. It also avoids null checks you're forgetting to do, which would lead to a runtime exception! The type signature will tell you if a value is optional and require you to handle the case where the value is missing.
 
-And when you write functions that return options instead of a value that could be null, you also make the behaviour explicit and again force the caller to handle both cases.
+And when you write functions that return options instead of a value that could be null, you also make the behavior explicit and again force the caller to handle both cases.
 
 Alright, that sounds awesome but we're still writing C# and not F#...
 
 ### An option type in C# #
 
-And although C# does not bring it's own option type, there are smart people who implemented it and provide us with a robust and well tested library!
+And although C# does not bring it's own option type there are smart people who implemented it and provide us with a robust and well tested library!
 
 https://github.com/nlkl/Optional
 
 ### Optional
-The Optional library provides a strongly typed alternative to null in C#. It's easy to use and has lots of cool features:
+The Optional library provides a strongly typed alternative to `null` in C#. It's easy to use and has lots of cool features:
 
 First and foremost it provides an implementation for **Option/Maybe** and **Either**
 
@@ -106,17 +108,125 @@ The either type is similar, but instead of `None` it provides another *exception
 In addition to that, the implementation prevents 'unsafe' access to the internal value of an `Option<T>`. It forces the user to check if a value is actually present, thereby mitigating many of the problems of null values.
 You can still retrieve the value directly if you want to (whether it's there or not), but you need to explicitly state that you want to access it in an unsafe way, it can't sneak in by accident.
 
-The library provides a lot of utility methods to make working with the option type more convenient. The most noteworthy feature that makes this implementation of the option type so great is the possibility to treat the option type like a collection with zero or one values. It's possible to apply map and filter functions to the value **without ever unpacking it from it's `Option` container**! I didn't realize how great this is until I actually implemented it in a bigger project. 
+The library provides a lot of utility methods to make working with the option type more convenient. The most noteworthy feature that makes this implementation of the option type so great is the possibility to treat the option type like a collection with zero or one values. It's possible to apply map and filter functions to the value **without ever unpacking it from it's `Option` container**!
+
+Let me repeat that: I don't actually need unpack the value, I can modify, filter or map the value by defining functions, that are applied only if a value is present.
+
+I didn't realize how great this is until I actually implemented it in a real-world project.
 
 ## Example
 
-To demonstrate the benefits of using Optional I create a small example project. It is inspired by a real-world project where Optional helped me write simpler and more robust code.
+To demonstrate the benefits of using Optional I created a small example project. It is inspired by a real-world project where Optional helped me write simpler and more robust code.
 
 The function I implemented represents part of the licensing logic of an application. It is called `GetActivation()` and it tries to retrieve a valid activation to check if the application can start. First, it checks if a valid activation is already stored on the computer. If it finds one, it just returns it. If there is no stored activation or if the stored activation is not valid for some reason (maybe it expired or is corrupted) it tries to find a license key and activate it by contacting the license server.
 A more detailed representation of the process is displayed in the diagram below.
 
 ![Diagram of license logic](option-example.png)
 
+When we follow the 'happy path' the logic is quite simple: Return the store activation. The problem is, that there a quite a view steps on the way that might fail and that need to be handled.
+
+```csharp
+public Activation GetActivation()
+{
+    var savedActivation = GetSavedActivation();
+    if (savedActivation != null && savedActivation.IsActivationStillValid())
+        return savedActivation;
+
+    var key = savedActivation?.Key ?? ReadKey();
+    if (string.IsNullOrWhiteSpace(key))
+    {
+        Error = LicenseError.NoLicenseKey;
+        return null;
+    }
+
+    var couldConnect = _connection.TryGetServerResponse(key);
+    if (!couldConnect)
+    {
+        Error = LicenseError.NoServerConnection;  
+        return null;
+    }
+    var licenseStringFromServer = _connection.Response;
+
+    var couldParse = _parser.TryParse(licenseStringFromServer);
+    if (!couldParse)
+    {
+        Error = LicenseError.ParseFailed;
+        return null;
+    }
+    var activationFromServer = _parser.ParsedActivation;
+
+    if (!HasValidActivationTime(activationFromServer))
+    {
+        Error = LicenseError.InvalidActivationTime;
+        return null;
+    }
+
+    SaveActivation(activationFromServer);
+
+    return activationFromServer;
+}
+
+private Activation GetSavedActivation()
+{
+   Activation result = null;
+
+   var encodedString = ReadActivationString();
+
+   if (!string.IsNullOrWhiteSpace(encodedString))
+   {
+       var decoded = Decode(encodedString);
+       if (decoded != null)
+       {
+           var couldParse = _parser.TryParse(decoded);
+
+           if (couldParse)
+           {
+               result = _parser.ParsedActivation;
+           }
+           else
+           {
+               Error = LicenseError.ParseFailed;
+           }
+       }
+       else
+       {
+           Error = LicenseError.DecodeFailed;
+       }
+   }
+   else
+   {
+       Error = LicenseError.NoActivation;
+   }
+   return result;
+}
+```
+
+
+```csharp
+public Option<Activation, LicenseError> GetActivation()
+{
+    var savedActivation = ReadActivationString()
+        .FlatMap(Decode)
+        .FlatMap(TryParseActivation);
+
+    if (savedActivation.Exists(a => a.IsActivationStillValid()))
+        return savedActivation;
+
+    var key = savedActivation.Match(
+        some: a => a.Key.SomeNotNull(LicenseError.NoLicenseKey),
+        none: e => ReadKey());
+
+    var onlineActivation = key.FlatMap(GetActivationStringFromLicenseServer)
+        .FlatMap(TryParseActivation)
+        .Filter(HasValidActivationTime, LicenseError.InvalidActivationTime);
+
+    onlineActivation.MatchSome(SaveActivation);
+
+    return onlineActivation.HasValue ? onlineActivation : savedActivation;
+}
+```
+
+Yep, that's it.
 
 
 ## Conclusion
@@ -127,5 +237,7 @@ You can still choose to do the equivalent of if (null) return; and some examples
 Instead of you being notified when things go wrong, Maybe forces you to think things through in the first place and make an explicit choice about what to do (at least as far as possibly empty values are concerned).
 
 Extract unsafe: So, it is possible to shoot yourself in the foot if you want to. The difference is you have to explicitly ask for this behavior, it cannot sneak in by accident.
+
+sdsd
 
 Of course option in C# is not as useful als in F#: can’t eliminate null. Still provides loads of benefits over null when dealing with optional values / Missing, invalid data!
