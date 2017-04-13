@@ -123,7 +123,15 @@ A more detailed representation of the process is displayed in the diagram below.
 
 ![Diagram of license logic](option-example.png)
 
-When we follow the 'happy path' the logic is quite simple: Return the store activation. The problem is, that there a quite a view steps on the way that might fail and that need to be handled.
+When we follow the 'happy path' the logic is quite simple: Return the stored activation. The problem is, that there a quite a few steps on the way that might fail and that need to be handled.
+
+### Implementation using null
+
+Here's the code for an implementation without using the Optional library. Yeah, it's long. Lots of null checks that clutter up the code and make it hard to see what's actually happening. Error handling is also difficult.
+
+* error property  //TODO
+
+You don't need to read the whole thing in detail, just note how incredibly long and cluttered it is.
 
 ```csharp
 public Activation GetActivation()
@@ -201,6 +209,10 @@ private Activation GetSavedActivation()
 }
 ```
 
+### Implementation using option type
+
+Alright, on to the nice part!
+Now here's the same logic implemented using the Optional library:
 
 ```csharp
 public Option<Activation, LicenseError> GetActivation()
@@ -228,16 +240,18 @@ public Option<Activation, LicenseError> GetActivation()
 
 Yep, that's it.
 
+explanation!
+
+If you want to take a closer look you can find the solution with the rest of the source code here (???LINK??)
+
 
 ## Conclusion
 // TODO
-"It’s not that dealing with any given instance of null is particularly hard, it’s that it is so easy to miss one. Removing this concern and encoding the information in the type system means programmers have less things to keep track of and simplifies control flow across the entire program. When you don’t have to keep track of it manually it is just plain easier to write code. More importantly, it is easier to write more robust code. "
+"It’s not that dealing with any given instance of null is particularly hard, it’s that it is so easy to miss one. Removing this concern and encoding the information in the type system means programmers have less things to keep track of and simplifies control flow across the entire program. When you don’t have to keep track of it manually it is just plain easier to write code. More importantly, it is easier to write more robust code."
 
 You can still choose to do the equivalent of if (null) return; and some examples will do that, because it makes sense to do in some contexts. What matters is that Maybe forces you to think about it at the time of writing the code, and to be explicit about it.
 Instead of you being notified when things go wrong, Maybe forces you to think things through in the first place and make an explicit choice about what to do (at least as far as possibly empty values are concerned).
 
 Extract unsafe: So, it is possible to shoot yourself in the foot if you want to. The difference is you have to explicitly ask for this behavior, it cannot sneak in by accident.
 
-sdsd
-
-Of course option in C# is not as useful als in F#: can’t eliminate null. Still provides loads of benefits over null when dealing with optional values / Missing, invalid data!
+Of course option in C# is not as useful as in F#: can’t eliminate null. Still provides loads of benefits over null when dealing with optional values / Missing, invalid data!
