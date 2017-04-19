@@ -6,6 +6,9 @@ If you’ve been programming C# you’ve probably shouted at your screen because
 It’s a strongly typed alternative to null values that not only lets you avoid NullReferenceExceptions but also declare your intent and write more focused code.
 I’ll give you an overview of this awesome concept and how to use it even though C# does not have a built-in option type.
 
+## Slides
+You can find the slides from the presentation at the C# Meetup Hamburg [here](https://anoia.github.io/option-type-csharp-slides).
+
 ## Intro
 
 So, what is this option type?
