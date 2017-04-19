@@ -94,7 +94,7 @@ Alright, that sounds awesome but we're still writing C# and not F#...
 
 And although C# does not bring it's own option type there are smart people who implemented it and provide us with a robust and well tested library!
 
-https://github.com/nlkl/Optional
+[https://github.com/nlkl/Optional](https://github.com/nlkl/Optional)
 
 ### Optional
 The Optional library provides a strongly typed alternative to `null` in C#. It's easy to use and has lots of cool features:
@@ -123,15 +123,13 @@ A more detailed representation of the process is displayed in the diagram below.
 
 ![Diagram of license logic](option-example.png)
 
-When we follow the 'happy path' the logic is quite simple: Return the stored activation. The problem is, that there a quite a few steps on the way that might fail and that need to be handled.
+When we follow the 'happy path' the logic is quite simple. The problem is that there a quite a few steps on the way that might fail and need to be handled.
 
 ### Implementation using null
 
-Here's the code for an implementation without using the Optional library. Yeah, it's long. Lots of null checks that clutter up the code and make it hard to see what's actually happening. Error handling is also difficult.
+Here's the code for an implementation without using the Optional library. Yeah, it's long. Lots of null checks that clutter up the code and make it hard to see what's actually happening. Error handling is also difficult. And I only hope the caller of `GetActivation` will remember to check the return value for null!
 
-* error property  //TODO
-
-You don't need to read the whole thing in detail, just note how incredibly long and cluttered it is.
+You don't need to read the whole thing in detail, just note how incredibly long and complicated it is.
 
 ```csharp
 public Activation GetActivation()
@@ -208,6 +206,9 @@ private Activation GetSavedActivation()
    return result;
 }
 ```
+I return either the retrieved `Activation` object, or null. If the latter happens, I set the `ErrorCode` property, which can then be read for information on what failed. 
+For the parsing and server connection I defined classes that handle those tasks, the methods they provide return a flag that indicates weather the operation was successful or not and provide a property that contains the requested value if they were. 
+
 
 ### Implementation using option type
 
@@ -217,8 +218,8 @@ Now here's the same logic implemented using the Optional library:
 ```csharp
 public Option<Activation, LicenseError> GetActivation()
 {
-    var savedActivation = ReadActivationString()
-        .FlatMap(Decode)
+    var savedActivation = ReadActivationString()    //1 
+        .FlatMap(Decode)                            
         .FlatMap(TryParseActivation);
 
     if (savedActivation.Exists(a => a.IsActivationStillValid()))
@@ -238,20 +239,32 @@ public Option<Activation, LicenseError> GetActivation()
 }
 ```
 
-Yep, that's it.
+Yep, that's it. Really! 
 
-explanation!
+If you're interested in a more detailed explanation: 
 
-If you want to take a closer look you can find the solution with the rest of the source code here (???LINK??)
+The first statement (1) consists of three chained method calls. 
+The first call to `ReadActivationString` returns an `Option<string, LicenseError>`. I'm using an either type here and not a maybe because I always want to know why an operation failed. 
+There are two possibilities now: The returned option type either contains the string read from the registry or an error code indicating that no license string was found. 
+
+The cool thing is that I don't actually need to check manually which of the two cases I have! I just apply a map function `Decode` to the optional value, without even unpacking the content! The map function is only executed, if my `Option<string, LicenseError>` actually contains a string. That string is then passed to the `Decode` function, which returns another optional value, containing either the decoded string or an error code indicating that the decode failed. What with the map when no string was retrieved from the registry in the first place? Well.. nothing. In that case I had an `Option<string, LicenseError>` that contained an error. When applying a map function it's not executed as there is no value to map. The error code is also not changed though, as the exceptional value in the either type is short-circuiting. 
+
+// TODO
+
+If you want to take a closer look you can find the solution with the rest of the source code [here](https://github.com/Anoia/option-type-csharp-example).
 
 
 ## Conclusion
-// TODO
-"It’s not that dealing with any given instance of null is particularly hard, it’s that it is so easy to miss one. Removing this concern and encoding the information in the type system means programmers have less things to keep track of and simplifies control flow across the entire program. When you don’t have to keep track of it manually it is just plain easier to write code. More importantly, it is easier to write more robust code."
 
-You can still choose to do the equivalent of if (null) return; and some examples will do that, because it makes sense to do in some contexts. What matters is that Maybe forces you to think about it at the time of writing the code, and to be explicit about it.
-Instead of you being notified when things go wrong, Maybe forces you to think things through in the first place and make an explicit choice about what to do (at least as far as possibly empty values are concerned).
+Alright, so null checking a value is not particularly difficult if you know it could be null. But it's really easy to miss a spot where you're supposed to check, because the type system doesn't help you at all. Using null to represent missing values only makes this worse. 
 
-Extract unsafe: So, it is possible to shoot yourself in the foot if you want to. The difference is you have to explicitly ask for this behavior, it cannot sneak in by accident.
+I hope I could show you that using an option type is a useful alternative when you're dealing with optional values. Take advantage of the help the type system can offer to avoid runtime errors, that only show when something goes wrong, and replace them with compile time errors, that force you to handle all the possible cases while you're writing your code in the first place. 
 
-Of course option in C# is not as useful as in F#: can’t eliminate null. Still provides loads of benefits over null when dealing with optional values / Missing, invalid data!
+As shown in the examples, this practice doesn't only lead to less error-prone code, it also vastly simplifies the control flow of the program, making it easier to read, understand and change. 
+
+You can still choose to do the equivalent of `if (null) return` and even directly access optional values in an unsafe way, the difference is that you need to think about what you want to do and then explicitly ask for that behavior, it can't happen accidentally! 
+
+Of course when writing C# we can't eliminate all occurrences of `null`, that's still a language "feature" we have to live with. 
+But using an option type to represent optional, invalid or missing data still offer lots of benefits over using null, and we can take advantage of those.
+
+
